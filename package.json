@@ -1,0 +1,29 @@
+{
+  "name": "mt5-crm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.555.0",
+    "mysql2": "^3.15.3",
+    "next": "16.0.4",
+    "pocketbase": "^0.26.3",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "sass": "^1.94.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.4",
+    "typescript": "^5"
+  }
+}

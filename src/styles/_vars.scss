@@ -1,0 +1,105 @@
+:root {
+    --baseFontFamily: 'Inter', 'Source Sans 3', sans-serif, emoji;
+    --monospaceFontFamily: 'Fira Code', 'Ubuntu Mono', monospace, emoji;
+    --iconFontFamily: 'remixicon';
+
+    --txtPrimaryColor: #0f172a;
+    --txtHintColor: #64748b;
+    --txtDisabledColor: #94a3b8;
+
+    --primaryColor: #4f46e5; /* Indigo 600 */
+    --primaryHoverColor: #4338ca; /* Indigo 700 */
+
+    --bodyColor: #f1f5f9; /* Slate 100 */
+
+    --baseColor: #ffffff;
+    --baseAlt1Color: #e2e8f0; /* Slate 200 */
+    --baseAlt2Color: #cbd5e1; /* Slate 300 */
+    --baseAlt3Color: #94a3b8; /* Slate 400 */
+    --baseAlt4Color: #64748b; /* Slate 500 */
+
+    --infoColor: #3b82f6; /* Blue 500 */
+    --infoAltColor: #dbeafe; /* Blue 100 */
+    --successColor: #10b981; /* Emerald 500 */
+    --successAltColor: #d1fae5; /* Emerald 100 */
+    --dangerColor: #ef4444; /* Red 500 */
+    --dangerAltColor: #fee2e2; /* Red 100 */
+    --warningColor: #f59e0b; /* Amber 500 */
+    --warningAltColor: #fef3c7; /* Amber 100 */
+
+    --overlayColor: rgba(15, 23, 42, 0.4);
+    --tooltipColor: rgba(15, 23, 42, 0.9);
+    --shadowColor: rgba(0, 0, 0, 0.05);
+    --cardShadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+    --baseFontSize: 14.5px;
+    --xsFontSize: 12px;
+    --smFontSize: 13px;
+    --lgFontSize: 15px;
+    --xlFontSize: 16px;
+
+    --baseLineHeight: 22px;
+    --smLineHeight: 16px;
+    --lgLineHeight: 24px;
+
+    --inputHeight: 34px;
+
+    --btnHeight: 40px;
+    --xsBtnHeight: 22px;
+    --smBtnHeight: 30px;
+    --lgBtnHeight: 54px;
+
+    --baseSpacing: 30px;
+    --xsSpacing: 15px;
+    --smSpacing: 20px;
+    --lgSpacing: 50px;
+    --xlSpacing: 60px;
+
+    --wrapperWidth: 850px;
+    --smWrapperWidth: 420px;
+    --lgWrapperWidth: 1200px;
+
+    --appSidebarWidth: 200px;
+    --pageSidebarWidth: 235px;
+
+    --baseAnimationSpeed: 150ms;
+    --activeAnimationSpeed: 70ms;
+    --entranceAnimationSpeed: 250ms;
+
+    --baseRadius: 4px;
+    --lgRadius: 12px;
+    --btnRadius: 4px;
+
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/accent-color
+    accent-color: var(--primaryColor);
+}
+
+
+// Maps
+// ----
+$colorsMap: (
+    "primary": var(--primaryColor),
+    "info": var(--infoColor),
+    "info-alt": var(--infoAltColor),
+    "success": var(--successColor),
+    "success-alt": var(--successAltColor),
+    "danger": var(--dangerColor),
+    "danger-alt": var(--dangerAltColor),
+    "warning": var(--warningColor),
+    "warning-alt": var(--warningAltColor),
+);
+
+$sidesMap: (
+    "t": "top",
+    "r": "right",
+    "b": "bottom",
+    "l": "left",
+);
+
+$sizesMap: (
+    "base": var(--baseSpacing),
+    "xs": var(--xsSpacing),
+    "sm": var(--smSpacing),
+    "lg": var(--lgSpacing),
+    "xl": var(--xlSpacing),
+);

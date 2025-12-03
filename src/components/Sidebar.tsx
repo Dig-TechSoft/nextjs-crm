@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -27,7 +28,15 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="logo">MT5</div>
+      <Link href="/" className="logo" aria-label="Flamycom CRM home">
+        <Image
+          src="/images/flamycom.png"
+          alt="Flamycom CRM logo"
+          width={180}
+          height={52}
+          priority
+        />
+      </Link>
       <nav className="nav">
         {menus.map((item) =>
           item.href ? (

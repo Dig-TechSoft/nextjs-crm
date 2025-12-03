@@ -1,5 +1,6 @@
 import React from "react";
 import clsx from "clsx";
+import Image from "next/image";
 
 interface FullPageProps {
   children: React.ReactNode;
@@ -14,15 +15,13 @@ export default function FullPage({ children, nobranding = false }: FullPageProps
           <>
             <div className="block txt-center m-b-lg">
               <figure className="logo">
-              <img
-                  src="/images/logo.svg"
-                  alt="MT5 CRM logo"
-                  width="40"
-                  height="40"
+                <Image
+                  src="/images/flamycom.png"
+                  alt="Flamycom CRM logo"
+                  width={320}
+                  height={96}
+                  priority
                 />
-                <span className="txt">
-                  MT5 <strong>CRM</strong>
-                </span>
               </figure>
             </div>
             <div className="clearfix" />

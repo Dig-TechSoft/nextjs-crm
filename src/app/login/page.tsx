@@ -34,9 +34,9 @@ export default function Login() {
 
 
   return (
-    <FullPage nobranding>
+    <FullPage>
       <div className="content txt-center m-b-base">
-        <h4>Login to MT5 CRM</h4>
+        <h4>Login to Flamycom CRM</h4>
       </div>
 
       <form className="block" onSubmit={authWithPassword}>

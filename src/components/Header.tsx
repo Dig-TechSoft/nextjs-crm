@@ -7,9 +7,10 @@ import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   breadcrumb?: React.ReactNode;
+  onToggleSidebar?: () => void;
 }
 
-export default function Header({ breadcrumb }: HeaderProps = {}) {
+export default function Header({ breadcrumb, onToggleSidebar }: HeaderProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const [userName, setUserName] = React.useState<string>("Admin");
@@ -41,6 +42,13 @@ export default function Header({ breadcrumb }: HeaderProps = {}) {
   return (
     <header className="header">
       <div className="header-inner">
+        <button
+          className="menu-toggle"
+          onClick={onToggleSidebar}
+          aria-label="Toggle navigation"
+        >
+          <i className="ri-menu-line"></i>
+        </button>
         <nav className="breadcrumbs">
           {breadcrumb ? (
             breadcrumb

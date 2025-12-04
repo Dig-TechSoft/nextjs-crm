@@ -17,7 +17,9 @@ export default function Dashboard() {
     if (!isTestLogin) {
       router.push("/login");
     } else {
-      getTotalUsers().then(setTotalUsers);
+      getTotalUsers()
+        .then((count) => setTotalUsers(typeof count === "number" ? count : 0))
+        .catch(() => setTotalUsers(0));
     }
 
     setReady(true);

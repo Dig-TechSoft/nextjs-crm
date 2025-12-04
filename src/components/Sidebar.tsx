@@ -5,7 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onNavigate?: () => void;
+}
+
+export default function Sidebar({ isOpen = false, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState<string | null>("Operation");
 
@@ -27,7 +32,7 @@ export default function Sidebar() {
   const isParentActive = () => pathname.startsWith("/operations");
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? "open" : ""}`}>
       <Link href="/" className="logo" aria-label="Flamycom CRM home">
         <Image
           src="/images/flamycom.png"
@@ -45,6 +50,7 @@ export default function Sidebar() {
               href={item.href}
               className={`nav-item ${isActive(item.href) ? "active" : ""}`}
               aria-current={isActive(item.href) ? "page" : undefined}
+              onClick={onNavigate}
             >
               <i className={item.icon}></i>
               <span className="nav-label">{item.name}</span>
@@ -76,6 +82,7 @@ export default function Sidebar() {
                       isActive(sub.href) ? "active" : ""
                     }`}
                     aria-current={isActive(sub.href) ? "page" : undefined}
+                    onClick={onNavigate}
                   >
                     {sub.name}
                   </Link>

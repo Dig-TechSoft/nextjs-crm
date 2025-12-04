@@ -7,9 +7,7 @@ export async function getTotalUsers() {
     try {
         const [rows] = await pool.query<RowDataPacket[]>(`
       SELECT COUNT(Login) as count 
-      FROM mt5_users 
-      WHERE \`group\` NOT LIKE 'managers%' 
-      AND \`group\` NOT LIKE 'demo%'
+      FROM mt5_users
     `);
 
         return rows[0].count;

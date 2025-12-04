@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
@@ -32,10 +32,10 @@ function buildCandidateList(code: string) {
 }
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { code: string } }
+  _req: NextRequest,
+  { params }: { params: Promise<{ code: string }> }
 ) {
-  const { code } = params;
+  const { code } = await params;
   const candidates = buildCandidateList(code);
 
   for (const baseDir of RECEIPT_DIRS) {

@@ -1,21 +1,26 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
+import { NextResponse } from "next/server";
+import fs from "fs/promises";
+import path from "path";
 
-const RECEIPT_DIR =
-  process.env.DEPOSIT_RECEIPT_DIR ||
-  'D:\\Workspace\\nextjs-crm-client\\deposit_receipt';
+// Look in an env-provided directory first, then project-level fallbacks.
+const RECEIPT_DIRS = [
+  process.env.DEPOSIT_RECEIPT_DIR,
+  path.join(process.cwd(), "deposit_receipt"),
+  path.join(process.cwd(), "public", "deposit_receipt"),
+  // sibling repo default (e.g., nextjs-crm-client/deposit_receipt)
+  path.resolve(process.cwd(), "..", "nextjs-crm-client", "deposit_receipt"),
+].filter(Boolean) as string[];
 
 const MIME_TYPES: Record<string, string> = {
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
 };
 
 function buildCandidateList(code: string) {
-  const sanitized = code.replace(/[^a-zA-Z0-9._-]/g, '');
+  const sanitized = code.replace(/[^a-zA-Z0-9._-]/g, "");
   const hasExt = path.extname(sanitized);
 
   if (hasExt) {
@@ -28,33 +33,32 @@ function buildCandidateList(code: string) {
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ code: string }> }
+  { params }: { params: { code: string } }
 ) {
-  const { code } = await params;
+  const { code } = params;
   const candidates = buildCandidateList(code);
 
-  for (const candidate of candidates) {
-    const fullPath = path.join(RECEIPT_DIR, candidate);
-    try {
-      const file = await fs.readFile(fullPath);
-      const ext = path.extname(candidate).toLowerCase();
-      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  for (const baseDir of RECEIPT_DIRS) {
+    for (const candidate of candidates) {
+      const fullPath = path.join(baseDir, candidate);
+      try {
+        const file = await fs.readFile(fullPath);
+        const ext = path.extname(candidate).toLowerCase();
+        const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
-      return new NextResponse(file, {
-        status: 200,
-        headers: {
-          'Content-Type': contentType,
-          'Cache-Control': 'private, max-age=300',
-        },
-      });
-    } catch (error) {
-      // Try next candidate
-      continue;
+        return new NextResponse(file, {
+          status: 200,
+          headers: {
+            "Content-Type": contentType,
+            "Cache-Control": "private, max-age=300",
+          },
+        });
+      } catch {
+        // Try the next candidate or directory.
+        continue;
+      }
     }
   }
 
-  return NextResponse.json(
-    { error: 'Receipt not found' },
-    { status: 404 }
-  );
+  return NextResponse.json({ error: "Receipt not found" }, { status: 404 });
 }

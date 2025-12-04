@@ -2,14 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-// Look in an env-provided directory first, then project-level fallbacks.
+const cwd = process.cwd();
+const projectRootGuess = path.resolve(cwd, "..", ".."); // works when running from .next/standalone
+const siblingGuess = path.resolve(projectRootGuess, "nextjs-crm-client", "deposit_receipt");
+const siblingFromCwd = path.resolve(cwd, "..", "nextjs-crm-client", "deposit_receipt");
+
+// Look in an env-provided directory first, then project-level fallbacks (handles standalone builds).
 const RECEIPT_DIRS = [
   process.env.DEPOSIT_RECEIPT_DIR,
-  path.join(process.cwd(), "deposit_receipt"),
-  path.join(process.cwd(), "public", "deposit_receipt"),
-  // sibling repo default (e.g., nextjs-crm-client/deposit_receipt)
-  path.resolve(process.cwd(), "..", "nextjs-crm-client", "deposit_receipt"),
-].filter(Boolean) as string[];
+  path.join(cwd, "deposit_receipt"),
+  path.join(cwd, "public", "deposit_receipt"),
+  siblingFromCwd,
+  path.join(projectRootGuess, "deposit_receipt"),
+  path.join(projectRootGuess, "public", "deposit_receipt"),
+  siblingGuess,
+]
+  .filter(Boolean)
+  .map((dir) => path.resolve(dir as string));
 
 const MIME_TYPES: Record<string, string> = {
   ".png": "image/png",

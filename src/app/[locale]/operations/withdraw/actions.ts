@@ -84,71 +84,76 @@ export async function fetchWithdrawalRequestsPaginated(
   const limit = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 10;
   const offset = (currentPage - 1) * limit;
 
-  const [[countRow]] = await pool.query<RowDataPacket[]>(
-    `SELECT COUNT(*) as total FROM withdrawal_request`
-  );
-  const total = Number(countRow?.total ?? 0);
+  try {
+    const [[countRow]] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM withdrawal_request`
+    );
+    const total = Number(countRow?.total ?? 0);
 
-  const [rows] = await pool.query<WithdrawalRow[]>(
-    `
-      SELECT
-        Withdraw_ID,
-        Deal,
-        Login,
-        ClientName,
-        Amount,
-        BankName,
-        BankNumber,
-        Time,
-        UpdateTime,
-        Status,
-        balance,
-        credit,
-        equity,
-        margin,
-        marginfree,
-        marginlevel,
-        operator,
-        currency,
-        cancelwithdrawdeal,
-        Comment,
-        PaymentMethod,
-        USDTType,
-        WalletAddress
-      FROM withdrawal_request
-      ORDER BY Time DESC
-      LIMIT ? OFFSET ?
-    `,
-    [limit, offset]
-  );
+    const [rows] = await pool.query<WithdrawalRow[]>(
+      `
+        SELECT
+          Withdraw_ID,
+          Deal,
+          Login,
+          ClientName,
+          Amount,
+          BankName,
+          BankNumber,
+          Time,
+          UpdateTime,
+          Status,
+          balance,
+          credit,
+          equity,
+          margin,
+          marginfree,
+          marginlevel,
+          operator,
+          currency,
+          cancelwithdrawdeal,
+          Comment,
+          PaymentMethod,
+          USDTType,
+          WalletAddress
+        FROM withdrawal_request
+        ORDER BY Time DESC
+        LIMIT ? OFFSET ?
+      `,
+      [limit, offset]
+    );
 
-  const requests = rows.map((row) => ({
-    id: row.Withdraw_ID,
-    deal: row.Deal,
-    login: row.Login,
-    clientName: row.ClientName,
-    amount: toNumber(row.Amount),
-    bankName: row.BankName,
-    bankNumber: row.BankNumber,
-    time: row.Time,
-    updateTime: row.UpdateTime,
-    status: row.Status,
-    balance: toNumber(row.balance),
-    credit: toNumber(row.credit),
-    equity: toNumber(row.equity),
-    margin: toNumber(row.margin),
-    marginFree: toNumber(row.marginfree),
-    marginLevel: toNumber(row.marginlevel),
-    operator: row.operator,
-    currency: row.currency,
-    cancelWithdrawDeal: row.cancelwithdrawdeal,
-    comment: row.Comment,
-    paymentMethod: row.PaymentMethod,
-    usdtType: row.USDTType,
-    walletAddress: row.WalletAddress,
-  }));
+    const requests = rows.map((row) => ({
+      id: row.Withdraw_ID,
+      deal: row.Deal,
+      login: row.Login,
+      clientName: row.ClientName,
+      amount: toNumber(row.Amount),
+      bankName: row.BankName,
+      bankNumber: row.BankNumber,
+      time: row.Time,
+      updateTime: row.UpdateTime,
+      status: row.Status,
+      balance: toNumber(row.balance),
+      credit: toNumber(row.credit),
+      equity: toNumber(row.equity),
+      margin: toNumber(row.margin),
+      marginFree: toNumber(row.marginfree),
+      marginLevel: toNumber(row.marginlevel),
+      operator: row.operator,
+      currency: row.currency,
+      cancelWithdrawDeal: row.cancelwithdrawdeal,
+      comment: row.Comment,
+      paymentMethod: row.PaymentMethod,
+      usdtType: row.USDTType,
+      walletAddress: row.WalletAddress,
+    }));
 
-  return { requests, total };
+    return { requests, total };
+  } catch (error) {
+    console.error('fetchWithdrawalRequestsPaginated error:', error);
+    return { requests: [], total: 0 };
+  }
 }
 
 export async function approveWithdrawalAction(formData: FormData) {

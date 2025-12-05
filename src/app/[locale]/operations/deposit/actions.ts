@@ -48,60 +48,8 @@ function revalidateDepositPages() {
 }
 
 export async function fetchDepositRequests(): Promise<DepositRequest[]> {
-  const [rows] = await pool.query<DepositRequestRow[]>(`
-    SELECT
-      Receipt_ID,
-      Deal,
-      Login,
-      UploadCode,
-      Time,
-      UpdateTime,
-      Status,
-      Amount,
-      Comment,
-      PaymentMethod,
-      USDTType,
-      WalletAddress
-    FROM deposit_receipt_upload
-    ORDER BY Time DESC
-  `);
-
-  return rows.map((row) => ({
-    id: row.Receipt_ID,
-    deal: row.Deal,
-    login: row.Login,
-    uploadCode: row.UploadCode,
-    time: row.Time,
-    updateTime: row.UpdateTime,
-    status: row.Status,
-    amount:
-      row.Amount === null
-        ? null
-        : typeof row.Amount === 'number'
-        ? row.Amount
-        : parseFloat(row.Amount),
-    comment: row.Comment,
-    paymentMethod: row.PaymentMethod,
-    usdtType: row.USDTType,
-    walletAddress: row.WalletAddress,
-  }));
-}
-
-export async function fetchDepositRequestsPaginated(
-  page: number,
-  pageSize: number
-): Promise<{ requests: DepositRequest[]; total: number }> {
-  const currentPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
-  const limit = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 10;
-  const offset = (currentPage - 1) * limit;
-
-  const [[countRow]] = await pool.query<RowDataPacket[]>(
-    `SELECT COUNT(*) as total FROM deposit_receipt_upload`
-  );
-  const total = Number(countRow?.total ?? 0);
-
-  const [rows] = await pool.query<DepositRequestRow[]>(
-    `
+  try {
+    const [rows] = await pool.query<DepositRequestRow[]>(`
       SELECT
         Receipt_ID,
         Deal,
@@ -117,32 +65,94 @@ export async function fetchDepositRequestsPaginated(
         WalletAddress
       FROM deposit_receipt_upload
       ORDER BY Time DESC
-      LIMIT ? OFFSET ?
-    `,
-    [limit, offset]
-  );
+    `);
 
-  const requests = rows.map((row) => ({
-    id: row.Receipt_ID,
-    deal: row.Deal,
-    login: row.Login,
-    uploadCode: row.UploadCode,
-    time: row.Time,
-    updateTime: row.UpdateTime,
-    status: row.Status,
-    amount:
-      row.Amount === null
-        ? null
-        : typeof row.Amount === 'number'
-        ? row.Amount
-        : parseFloat(row.Amount),
-    comment: row.Comment,
-    paymentMethod: row.PaymentMethod,
-    usdtType: row.USDTType,
-    walletAddress: row.WalletAddress,
-  }));
+    return rows.map((row) => ({
+      id: row.Receipt_ID,
+      deal: row.Deal,
+      login: row.Login,
+      uploadCode: row.UploadCode,
+      time: row.Time,
+      updateTime: row.UpdateTime,
+      status: row.Status,
+      amount:
+        row.Amount === null
+          ? null
+          : typeof row.Amount === 'number'
+          ? row.Amount
+          : parseFloat(row.Amount),
+      comment: row.Comment,
+      paymentMethod: row.PaymentMethod,
+      usdtType: row.USDTType,
+      walletAddress: row.WalletAddress,
+    }));
+  } catch (error) {
+    console.error('fetchDepositRequests error:', error);
+    return [];
+  }
+}
 
-  return { requests, total };
+export async function fetchDepositRequestsPaginated(
+  page: number,
+  pageSize: number
+): Promise<{ requests: DepositRequest[]; total: number }> {
+  const currentPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const limit = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 10;
+  const offset = (currentPage - 1) * limit;
+
+  try {
+    const [[countRow]] = await pool.query<RowDataPacket[]>(
+      `SELECT COUNT(*) as total FROM deposit_receipt_upload`
+    );
+    const total = Number(countRow?.total ?? 0);
+
+    const [rows] = await pool.query<DepositRequestRow[]>(
+      `
+        SELECT
+          Receipt_ID,
+          Deal,
+          Login,
+          UploadCode,
+          Time,
+          UpdateTime,
+          Status,
+          Amount,
+          Comment,
+          PaymentMethod,
+          USDTType,
+          WalletAddress
+        FROM deposit_receipt_upload
+        ORDER BY Time DESC
+        LIMIT ? OFFSET ?
+      `,
+      [limit, offset]
+    );
+
+    const requests = rows.map((row) => ({
+      id: row.Receipt_ID,
+      deal: row.Deal,
+      login: row.Login,
+      uploadCode: row.UploadCode,
+      time: row.Time,
+      updateTime: row.UpdateTime,
+      status: row.Status,
+      amount:
+        row.Amount === null
+          ? null
+          : typeof row.Amount === 'number'
+          ? row.Amount
+          : parseFloat(row.Amount),
+      comment: row.Comment,
+      paymentMethod: row.PaymentMethod,
+      usdtType: row.USDTType,
+      walletAddress: row.WalletAddress,
+    }));
+
+    return { requests, total };
+  } catch (error) {
+    console.error('fetchDepositRequestsPaginated error:', error);
+    return { requests: [], total: 0 };
+  }
 }
 
 export async function approveDepositAction(formData: FormData) {

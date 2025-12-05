@@ -41,7 +41,7 @@ const DEPOSIT_API_URL =
 const API_TIMEOUT_MS = Number(process.env.API_TIMEOUT_MS || 10000);
 
 function revalidateDepositPages() {
-  revalidateDepositPages();
+  revalidatePath('/operations/deposit');
   routing.locales.forEach((locale) =>
     revalidatePath(`/${locale}/operations/deposit`)
   );
@@ -150,94 +150,99 @@ export async function approveDepositAction(formData: FormData) {
   const commentInput = (formData.get('comment')?.toString() || '').trim();
   const customComment = commentInput || 'Deposit_BO';
 
-  if (!receiptId) {
-    return { success: false, error: 'Invalid receipt id.' };
-  }
-
-  const [rows] = await pool.query<DepositRequestRow[]>(
-    `SELECT * FROM deposit_receipt_upload WHERE Receipt_ID = ?`,
-    [receiptId]
-  );
-
-  if (!rows.length) {
-    return { success: false, error: 'Request not found.' };
-  }
-
-  const request = rows[0];
-
-  if ((request.Status || '').toLowerCase() === 'approved') {
-    return { success: false, error: 'This request is already approved.' };
-  }
-
-  if ((request.Status || '').toLowerCase() === 'rejected') {
-    return { success: false, error: 'This request has been rejected.' };
-  }
-  if (!request.Login) {
-    return { success: false, error: 'Login is missing for this request.' };
-  }
-
-  const amountValue =
-    request.Amount === null
-      ? null
-      : typeof request.Amount === 'number'
-      ? request.Amount
-      : parseFloat(request.Amount);
-
-  if (!amountValue || Number.isNaN(amountValue)) {
-    return { success: false, error: 'Amount is missing for this request.' };
-  }
-
-  const apiUrl = new URL(DEPOSIT_API_URL);
-  apiUrl.searchParams.set('login', request.Login);
-  apiUrl.searchParams.set('type', '2');
-  apiUrl.searchParams.set('balance', amountValue.toString());
-  apiUrl.searchParams.set('comment', customComment);
-
-  let ticket = '';
-
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
-    const apiResponse = await fetch(apiUrl.toString(), {
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!apiResponse.ok) {
-      return { success: false, error: 'Deposit API call failed.' };
+    if (!receiptId) {
+      return { success: false, error: 'Invalid receipt id.' };
     }
 
-    const payload = (await apiResponse.json()) as
-      | { success?: boolean; data?: { ticket?: string } }
-      | undefined;
+    const [rows] = await pool.query<DepositRequestRow[]>(
+      `SELECT * FROM deposit_receipt_upload WHERE Receipt_ID = ?`,
+      [receiptId]
+    );
 
-    if (!payload?.success || !payload.data?.ticket) {
-      return { success: false, error: 'Deposit API did not return a ticket.' };
+    if (!rows.length) {
+      return { success: false, error: 'Request not found.' };
     }
 
-    ticket = payload.data.ticket;
+    const request = rows[0];
+
+    if ((request.Status || '').toLowerCase() === 'approved') {
+      return { success: false, error: 'This request is already approved.' };
+    }
+
+    if ((request.Status || '').toLowerCase() === 'rejected') {
+      return { success: false, error: 'This request has been rejected.' };
+    }
+    if (!request.Login) {
+      return { success: false, error: 'Login is missing for this request.' };
+    }
+
+    const amountValue =
+      request.Amount === null
+        ? null
+        : typeof request.Amount === 'number'
+        ? request.Amount
+        : parseFloat(request.Amount);
+
+    if (!amountValue || Number.isNaN(amountValue)) {
+      return { success: false, error: 'Amount is missing for this request.' };
+    }
+
+    const apiUrl = new URL(DEPOSIT_API_URL);
+    apiUrl.searchParams.set('login', request.Login);
+    apiUrl.searchParams.set('type', '2');
+    apiUrl.searchParams.set('balance', amountValue.toString());
+    apiUrl.searchParams.set('comment', customComment);
+
+    let ticket = '';
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+      const apiResponse = await fetch(apiUrl.toString(), {
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!apiResponse.ok) {
+        return { success: false, error: 'Deposit API call failed.' };
+      }
+
+      const payload = (await apiResponse.json()) as
+        | { success?: boolean; data?: { ticket?: string } }
+        | undefined;
+
+      if (!payload?.success || !payload.data?.ticket) {
+        return { success: false, error: 'Deposit API did not return a ticket.' };
+      }
+
+      ticket = payload.data.ticket;
+    } catch (error) {
+      console.error('Deposit API error:', error);
+      const message =
+        error instanceof Error && error.name === 'AbortError'
+          ? 'Deposit API timed out.'
+          : 'Unable to reach deposit API.';
+      return { success: false, error: message };
+    }
+
+    await pool.query(
+      `
+        UPDATE deposit_receipt_upload
+        SET Deal = ?, Status = 'approved', Comment = ?, UpdateTime = CURRENT_TIMESTAMP
+        WHERE Receipt_ID = ?
+      `,
+      [ticket, customComment, receiptId]
+    );
+
+    revalidateDepositPages();
+
+    return { success: true, ticket, comment: customComment };
   } catch (error) {
-    console.error('Deposit API error:', error);
-    const message =
-      error instanceof Error && error.name === 'AbortError'
-        ? 'Deposit API timed out.'
-        : 'Unable to reach deposit API.';
-    return { success: false, error: message };
+    console.error('approveDepositAction error:', error);
+    return { success: false, error: 'Deposit approval failed on server.' };
   }
-
-  await pool.query(
-    `
-      UPDATE deposit_receipt_upload
-      SET Deal = ?, Status = 'approved', Comment = ?, UpdateTime = CURRENT_TIMESTAMP
-      WHERE Receipt_ID = ?
-    `,
-    [ticket, customComment, receiptId]
-  );
-
-  revalidateDepositPages();
-
-  return { success: true, ticket, comment: customComment };
 }
 
 export async function rejectDepositAction(formData: FormData) {
@@ -245,39 +250,44 @@ export async function rejectDepositAction(formData: FormData) {
   const commentInput = (formData.get('comment')?.toString() || '').trim();
   const customComment = commentInput || 'Rejected';
 
-  if (!receiptId) {
-    return { success: false, error: 'Invalid receipt id.' };
+  try {
+    if (!receiptId) {
+      return { success: false, error: 'Invalid receipt id.' };
+    }
+
+    const [rows] = await pool.query<DepositRequestRow[]>(
+      `SELECT * FROM deposit_receipt_upload WHERE Receipt_ID = ?`,
+      [receiptId]
+    );
+
+    if (!rows.length) {
+      return { success: false, error: 'Request not found.' };
+    }
+
+    const request = rows[0];
+
+    if ((request.Status || '').toLowerCase() === 'approved') {
+      return { success: false, error: 'This request is already approved.' };
+    }
+
+    if ((request.Status || '').toLowerCase() === 'rejected') {
+      return { success: false, error: 'This request is already rejected.' };
+    }
+
+    await pool.query(
+      `
+        UPDATE deposit_receipt_upload
+        SET Status = 'rejected', Comment = ?, UpdateTime = CURRENT_TIMESTAMP
+        WHERE Receipt_ID = ?
+      `,
+      [customComment, receiptId]
+    );
+
+    revalidateDepositPages();
+
+    return { success: true };
+  } catch (error) {
+    console.error('rejectDepositAction error:', error);
+    return { success: false, error: 'Deposit rejection failed on server.' };
   }
-
-  const [rows] = await pool.query<DepositRequestRow[]>(
-    `SELECT * FROM deposit_receipt_upload WHERE Receipt_ID = ?`,
-    [receiptId]
-  );
-
-  if (!rows.length) {
-    return { success: false, error: 'Request not found.' };
-  }
-
-  const request = rows[0];
-
-  if ((request.Status || '').toLowerCase() === 'approved') {
-    return { success: false, error: 'This request is already approved.' };
-  }
-
-  if ((request.Status || '').toLowerCase() === 'rejected') {
-    return { success: false, error: 'This request is already rejected.' };
-  }
-
-  await pool.query(
-    `
-      UPDATE deposit_receipt_upload
-      SET Status = 'rejected', Comment = ?, UpdateTime = CURRENT_TIMESTAMP
-      WHERE Receipt_ID = ?
-    `,
-    [customComment, receiptId]
-  );
-
-  revalidatePath('/operations/deposit');
-
-  return { success: true };
 }

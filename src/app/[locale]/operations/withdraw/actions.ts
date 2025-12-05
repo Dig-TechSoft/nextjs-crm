@@ -157,47 +157,52 @@ export async function approveWithdrawalAction(formData: FormData) {
   const customComment = commentInput || 'Approved';
   const operator = (formData.get('operator')?.toString() || '').trim() || 'Operator';
 
-  if (!withdrawId) {
-    return { success: false, error: 'Invalid withdraw id.' };
+  try {
+    if (!withdrawId) {
+      return { success: false, error: 'Invalid withdraw id.' };
+    }
+
+    const [rows] = await pool.query<WithdrawalRow[]>(
+      `SELECT * FROM withdrawal_request WHERE Withdraw_ID = ?`,
+      [withdrawId]
+    );
+
+    if (!rows.length) {
+      return { success: false, error: 'Request not found.' };
+    }
+
+    const request = rows[0];
+    const currentStatus = (request.Status || '').toLowerCase();
+    if (currentStatus === 'cancelled') {
+      return { success: false, error: 'This request was cancelled by the client.' };
+    }
+    if (currentStatus === 'rejected') {
+      return { success: false, error: 'This request has been rejected.' };
+    }
+    if (currentStatus === 'transferred') {
+      return { success: false, error: 'This request is already approved.' };
+    }
+
+    await pool.query(
+      `
+        UPDATE withdrawal_request
+        SET Status = 'transferred',
+            Comment = ?,
+            operator = ?,
+            currency = 'USD',
+            UpdateTime = CURRENT_TIMESTAMP
+        WHERE Withdraw_ID = ?
+      `,
+      [customComment, operator, withdrawId]
+    );
+
+    revalidateWithdrawPages();
+
+    return { success: true };
+  } catch (error) {
+    console.error('approveWithdrawalAction error:', error);
+    return { success: false, error: 'Withdrawal approval failed on server.' };
   }
-
-  const [rows] = await pool.query<WithdrawalRow[]>(
-    `SELECT * FROM withdrawal_request WHERE Withdraw_ID = ?`,
-    [withdrawId]
-  );
-
-  if (!rows.length) {
-    return { success: false, error: 'Request not found.' };
-  }
-
-  const request = rows[0];
-  const currentStatus = (request.Status || '').toLowerCase();
-  if (currentStatus === 'cancelled') {
-    return { success: false, error: 'This request was cancelled by the client.' };
-  }
-  if (currentStatus === 'rejected') {
-    return { success: false, error: 'This request has been rejected.' };
-  }
-  if (currentStatus === 'transferred') {
-    return { success: false, error: 'This request is already approved.' };
-  }
-
-  await pool.query(
-    `
-      UPDATE withdrawal_request
-      SET Status = 'transferred',
-          Comment = ?,
-          operator = ?,
-          currency = 'USD',
-          UpdateTime = CURRENT_TIMESTAMP
-      WHERE Withdraw_ID = ?
-    `,
-    [customComment, operator, withdrawId]
-  );
-
-  revalidateWithdrawPages();
-
-  return { success: true };
 }
 
 export async function rejectWithdrawalAction(formData: FormData) {
@@ -206,50 +211,50 @@ export async function rejectWithdrawalAction(formData: FormData) {
   const customComment = commentInput || 'ADJ_RejectWithdraw';
   const operator = (formData.get('operator')?.toString() || '').trim() || 'Operator';
 
-  if (!withdrawId) {
-    return { success: false, error: 'Invalid withdraw id.' };
-  }
-
-  const [rows] = await pool.query<WithdrawalRow[]>(
-    `SELECT * FROM withdrawal_request WHERE Withdraw_ID = ?`,
-    [withdrawId]
-  );
-
-  if (!rows.length) {
-    return { success: false, error: 'Request not found.' };
-  }
-
-  const request = rows[0];
-  const currentStatus = (request.Status || '').toLowerCase();
-  if (currentStatus === 'cancelled') {
-    return { success: false, error: 'This request was cancelled by the client.' };
-  }
-  if (currentStatus === 'rejected') {
-    return { success: false, error: 'This request is already rejected.' };
-  }
-  if (currentStatus === 'transferred') {
-    return { success: false, error: 'This request is already approved.' };
-  }
-
-  const login = request.Login;
-  const amountValue = toNumber(request.Amount);
-
-  if (!login) {
-    return { success: false, error: 'Login is missing for this request.' };
-  }
-  if (!amountValue || Number.isNaN(amountValue)) {
-    return { success: false, error: 'Amount is missing for this request.' };
-  }
-
-  const apiUrl = new URL(BALANCE_API_URL);
-  apiUrl.searchParams.set('login', login);
-  apiUrl.searchParams.set('type', '2');
-  apiUrl.searchParams.set('balance', amountValue.toString());
-  apiUrl.searchParams.set('comment', 'ADJ_RejectWithdraw');
-
-  let ticket = '';
-
   try {
+    if (!withdrawId) {
+      return { success: false, error: 'Invalid withdraw id.' };
+    }
+
+    const [rows] = await pool.query<WithdrawalRow[]>(
+      `SELECT * FROM withdrawal_request WHERE Withdraw_ID = ?`,
+      [withdrawId]
+    );
+
+    if (!rows.length) {
+      return { success: false, error: 'Request not found.' };
+    }
+
+    const request = rows[0];
+    const currentStatus = (request.Status || '').toLowerCase();
+    if (currentStatus === 'cancelled') {
+      return { success: false, error: 'This request was cancelled by the client.' };
+    }
+    if (currentStatus === 'rejected') {
+      return { success: false, error: 'This request is already rejected.' };
+    }
+    if (currentStatus === 'transferred') {
+      return { success: false, error: 'This request is already approved.' };
+    }
+
+    const login = request.Login;
+    const amountValue = toNumber(request.Amount);
+
+    if (!login) {
+      return { success: false, error: 'Login is missing for this request.' };
+    }
+    if (!amountValue || Number.isNaN(amountValue)) {
+      return { success: false, error: 'Amount is missing for this request.' };
+    }
+
+    const apiUrl = new URL(BALANCE_API_URL);
+    apiUrl.searchParams.set('login', login);
+    apiUrl.searchParams.set('type', '2');
+    apiUrl.searchParams.set('balance', amountValue.toString());
+    apiUrl.searchParams.set('comment', 'ADJ_RejectWithdraw');
+
+    let ticket = '';
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
     const apiResponse = await fetch(apiUrl.toString(), {
@@ -271,30 +276,30 @@ export async function rejectWithdrawalAction(formData: FormData) {
     }
 
     ticket = payload.data.ticket;
+
+    await pool.query(
+      `
+        UPDATE withdrawal_request
+        SET Status = 'rejected',
+            Comment = ?,
+            cancelwithdrawdeal = ?,
+            operator = ?,
+            currency = 'USD',
+            UpdateTime = CURRENT_TIMESTAMP
+        WHERE Withdraw_ID = ?
+      `,
+      [customComment, ticket, operator, withdrawId]
+    );
+
+    revalidateWithdrawPages();
+
+    return { success: true, ticket };
   } catch (error) {
-    console.error('Refund API error:', error);
+    console.error('rejectWithdrawalAction error:', error);
     const message =
       error instanceof Error && error.name === 'AbortError'
         ? 'Refund API timed out.'
-        : 'Unable to reach refund API.';
+        : 'Withdrawal rejection failed on server.';
     return { success: false, error: message };
   }
-
-  await pool.query(
-    `
-      UPDATE withdrawal_request
-      SET Status = 'rejected',
-          Comment = ?,
-          cancelwithdrawdeal = ?,
-          operator = ?,
-          currency = 'USD',
-          UpdateTime = CURRENT_TIMESTAMP
-      WHERE Withdraw_ID = ?
-    `,
-    [customComment, ticket, operator, withdrawId]
-  );
-
-  revalidateWithdrawPages();
-
-  return { success: true, ticket };
 }

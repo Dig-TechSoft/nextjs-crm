@@ -78,15 +78,46 @@ function toNumber(value: number | string | null): number | null {
 
 export async function fetchWithdrawalRequestsPaginated(
   page: number,
-  pageSize: number
+  pageSize: number,
+  filters?: { status?: string; from?: string; to?: string }
 ): Promise<{ requests: WithdrawalRequest[]; total: number }> {
   const currentPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const limit = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 10;
   const offset = (currentPage - 1) * limit;
 
+  const whereParts: string[] = [];
+  const params: Array<string | number | Date> = [];
+
+  const status = filters?.status?.toLowerCase();
+  const hasDates = Boolean(filters?.from) || Boolean(filters?.to);
+  if (status && status !== 'all') {
+    if (status === 'pending' && !hasDates) {
+      whereParts.push(`(LOWER(Status) = ? OR DATE(Time) = CURDATE())`);
+      params.push(status);
+    } else {
+      whereParts.push(`LOWER(Status) = ?`);
+      params.push(status);
+    }
+  }
+
+  const from = filters?.from ? new Date(filters.from) : null;
+  if (from && !Number.isNaN(from.getTime())) {
+    whereParts.push(`Time >= ?`);
+    params.push(from);
+  }
+
+  const to = filters?.to ? new Date(filters.to) : null;
+  if (to && !Number.isNaN(to.getTime())) {
+    whereParts.push(`Time <= ?`);
+    params.push(to);
+  }
+
+  const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
   try {
     const [[countRow]] = await pool.query<RowDataPacket[]>(
-      `SELECT COUNT(*) as total FROM withdrawal_request`
+      `SELECT COUNT(*) as total FROM withdrawal_request ${whereClause}`,
+      params
     );
     const total = Number(countRow?.total ?? 0);
 
@@ -112,16 +143,17 @@ export async function fetchWithdrawalRequestsPaginated(
           operator,
           currency,
           cancelwithdrawdeal,
-          Comment,
-          PaymentMethod,
-          USDTType,
-          WalletAddress
-        FROM withdrawal_request
-        ORDER BY Time DESC
-        LIMIT ? OFFSET ?
-      `,
-      [limit, offset]
-    );
+        Comment,
+        PaymentMethod,
+        USDTType,
+        WalletAddress
+      FROM withdrawal_request
+      ${whereClause}
+      ORDER BY Time DESC
+      LIMIT ? OFFSET ?
+    `,
+    [...params, limit, offset]
+  );
 
     const requests = rows.map((row) => ({
       id: row.Withdraw_ID,

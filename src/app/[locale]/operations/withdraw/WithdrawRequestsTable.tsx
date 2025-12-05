@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import {
   approveWithdrawalAction,
   rejectWithdrawalAction,
@@ -19,7 +20,7 @@ interface WithdrawalTableProps {
 }
 
 function formatAmount(value: number | null) {
-  if (value === null || Number.isNaN(value)) return "—";
+  if (value === null || Number.isNaN(value)) return "--";
   return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -27,22 +28,23 @@ function formatAmount(value: number | null) {
 }
 
 function formatDate(value: Date | string | null) {
-  if (!value) return "—";
+  if (!value) return "--";
   const date = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "--";
   return date.toLocaleString();
 }
 
-const statusTone: Record<string, { label: string; tone: string }> = {
-  transferred: { label: "Approved", tone: "success" },
-  approved: { label: "Approved", tone: "success" },
-  pending: { label: "Pending", tone: "warning" },
-  rejected: { label: "Rejected", tone: "danger" },
-  cancelled: { label: "Cancelled", tone: "warning" },
-};
+const statusTone = (t: (key: string, vars?: Record<string, any>) => string) => ({
+  transferred: { label: t("status.approved"), tone: "success" },
+  approved: { label: t("status.approved"), tone: "success" },
+  pending: { label: t("status.pending"), tone: "warning" },
+  rejected: { label: t("status.rejected"), tone: "danger" },
+  cancelled: { label: t("status.cancelled"), tone: "muted" },
+});
 
 export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps) {
   const router = useRouter();
+  const t = useTranslations("WithdrawTable");
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Record<number, Feedback>>({});
   const [, startTransition] = useTransition();
@@ -74,7 +76,7 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
         [id]: {
           type: "error",
           message:
-            error instanceof Error ? error.message : "Approval failed unexpectedly",
+            error instanceof Error ? error.message : t("errors.unexpectedApproval"),
         },
       }));
       setPendingId(null);
@@ -84,7 +86,7 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
     if (result?.success) {
       setFeedback((prev) => ({
         ...prev,
-        [id]: { type: "success", message: "Approved" },
+        [id]: { type: "success", message: t("approved") },
       }));
       startTransition(() => router.refresh());
     } else {
@@ -92,7 +94,7 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
         ...prev,
         [id]: {
           type: "error",
-          message: result?.error || "Approval failed",
+          message: result?.error || t("errors.approval"),
         },
       }));
     }
@@ -118,7 +120,7 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
         [id]: {
           type: "error",
           message:
-            error instanceof Error ? error.message : "Rejection failed unexpectedly",
+            error instanceof Error ? error.message : t("errors.unexpectedRejection"),
         },
       }));
       setPendingId(null);
@@ -128,7 +130,7 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
     if (result?.success) {
       setFeedback((prev) => ({
         ...prev,
-        [id]: { type: "success", message: "Refunded & Rejected" },
+        [id]: { type: "success", message: t("rejected") },
       }));
       startTransition(() => router.refresh());
     } else {
@@ -136,7 +138,7 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
         ...prev,
         [id]: {
           type: "error",
-          message: result?.error || "Rejection failed",
+          message: result?.error || t("errors.rejection"),
         },
       }));
     }
@@ -150,8 +152,8 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
         <div className={styles.emptyState}>
           <i className="ri-inbox-line" aria-hidden />
           <div>
-            <strong>No withdrawal requests yet</strong>
-            <p>New submissions will appear here.</p>
+            <strong>{t("emptyTitle")}</strong>
+            <p>{t("emptySubtitle")}</p>
           </div>
         </div>
       ) : (
@@ -159,18 +161,21 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
           <table className={styles.requestsTable}>
             <thead>
               <tr>
-                <th className={styles.min}>Request</th>
-                <th>Account</th>
-                <th className={styles.tight}>Balances</th>
-                <th className={styles.tight}>Payment</th>
-                <th className={styles.min}>Status</th>
-                <th className={styles.min}>Action</th>
+                <th className={styles.min}>{t("columns.request")}</th>
+                <th>{t("columns.account")}</th>
+                <th className={styles.tight}>{t("columns.balances")}</th>
+                <th className={styles.tight}>{t("columns.payment")}</th>
+                <th className={styles.min}>{t("columns.status")}</th>
+                <th className={styles.min}>{t("columns.action")}</th>
               </tr>
             </thead>
             <tbody>
               {requests.map((req) => {
                 const statusKey = (req.status || "").toLowerCase();
-                const tone = statusTone[statusKey] || statusTone.pending;
+                const toneMap = statusTone(t);
+                const tone =
+                  toneMap[statusKey as keyof ReturnType<typeof statusTone>] ||
+                  toneMap.pending;
                 const isApproved = statusKey === "transferred" || statusKey === "approved";
                 const isRejected = statusKey === "rejected";
                 const isCancelled = statusKey === "cancelled";
@@ -185,7 +190,7 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
                     <td>
                       <div className={styles.stack}>
                         <div className={styles.main}>
-                          {req.login || "—"}
+                          {req.login || t("unknown")}
                           {req.amount !== null && (
                             <span className={styles.amount}>
                               {formatAmount(req.amount)} {req.currency || "USD"}
@@ -193,13 +198,13 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
                           )}
                         </div>
                         <div className={styles.sub}>
-                          {req.clientName || <span className={styles.muted}>Client</span>}
+                          {req.clientName || <span className={styles.muted}>{t("client")}</span>}
                         </div>
                         <div className={styles.sub}>
                           {req.comment ? (
                             <span title={req.comment}>{req.comment}</span>
                           ) : (
-                            <span className={styles.muted}>No comment yet</span>
+                            <span className={styles.muted}>{t("noComment")}</span>
                           )}
                         </div>
                       </div>
@@ -207,26 +212,35 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
                     <td className={styles.balancesCell}>
                       <div className={styles.stack}>
                         <div className={styles.main}>
-                          Bal {formatAmount(req.balance)} · Eq {formatAmount(req.equity)}
+                          {t("balanceLine", {
+                            bal: formatAmount(req.balance),
+                            eq: formatAmount(req.equity),
+                          })}
                         </div>
                         <div className={styles.sub}>
-                          Mar {formatAmount(req.margin)} · Free {formatAmount(req.marginFree)}
+                          {t("marginLine", {
+                            margin: formatAmount(req.margin),
+                            free: formatAmount(req.marginFree),
+                          })}
                         </div>
                         <div className={styles.sub}>
-                          Lv {formatAmount(req.marginLevel)}% · Cr {formatAmount(req.credit)}
+                          {t("levelLine", {
+                            level: formatAmount(req.marginLevel),
+                            credit: formatAmount(req.credit),
+                          })}
                         </div>
                       </div>
                     </td>
                     <td className={styles.paymentCell}>
                       <div className={`${styles.stack} ${styles.paymentStack}`}>
                         <div className={styles.main}>
-                          {req.paymentMethod || req.bankName || "—"}
+                          {req.paymentMethod || req.bankName || t("unknown")}
                         </div>
                         <div className={styles.sub}>
                           {req.bankNumber ||
                             req.walletAddress ||
                             req.usdtType ||
-                            "—"}
+                            t("unknown")}
                         </div>
                       </div>
                     </td>
@@ -236,16 +250,16 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
                       </div>
                       {req.deal && (
                         <div className={`${styles.sub} ${styles.muted} ${styles.nowrap}`}>
-                          Deal #{req.deal}
+                          {t("deal", { id: req.deal })}
                         </div>
                       )}
                       {req.cancelWithdrawDeal && (
                         <div className={`${styles.sub} ${styles.muted} ${styles.nowrap}`}>
-                          Refund #{req.cancelWithdrawDeal}
+                          {t("refund", { id: req.cancelWithdrawDeal })}
                         </div>
                       )}
                       <div className={`${styles.sub} ${styles.muted} ${styles.nowrap}`}>
-                        Updated {formatDate(req.updateTime)}
+                        {t("updated", { date: formatDate(req.updateTime) })}
                       </div>
                     </td>
                     <td>
@@ -275,32 +289,32 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
                               ? req.comment || "ADJ_RejectWithdraw"
                               : req.comment || "Approved"
                           }
-                          placeholder="Comment"
-                          aria-label="Comment"
+                          placeholder={t("commentPlaceholder")}
+                          aria-label={t("commentPlaceholder")}
                           readOnly={isResolved}
                           disabled={isResolved}
                         />
                         <div className={styles.actionsRow}>
                           <button
                             type="submit"
-                          value="approve"
-                          className="btn btn-primary btn-sm btn-expanded-sm"
-                          disabled={pendingId === req.id || isResolved}
-                        >
-                          {pendingId === req.id
-                            ? "Processing..."
-                            : isApproved
-                            ? "Approved"
-                            : "Approve"}
+                            value="approve"
+                            className="btn btn-primary btn-sm btn-expanded-sm"
+                            disabled={pendingId === req.id || isResolved}
+                          >
+                            {pendingId === req.id
+                              ? t("processing")
+                              : isApproved
+                              ? t("approved")
+                              : t("approve")}
                           </button>
                           <button
                             type="submit"
-                          value="reject"
-                          className="btn btn-danger btn-sm btn-outline"
-                          disabled={pendingId === req.id || isResolved}
-                        >
-                          {pendingId === req.id ? "Processing..." : "Reject"}
-                        </button>
+                            value="reject"
+                            className="btn btn-danger btn-sm btn-outline"
+                            disabled={pendingId === req.id || isResolved}
+                          >
+                            {pendingId === req.id ? t("processing") : t("reject")}
+                          </button>
                         </div>
                       </form>
                       {feedbackMsg && (

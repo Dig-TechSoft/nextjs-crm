@@ -26,10 +26,139 @@
     "systemStatus": "System Status",
     "statusValue": "All systems operational",
     "totalUsers": "Total Users",
-    "activeReal": "Active real accounts"
+    "activeReal": "Active real accounts",
+    "pendingDeposits": {
+      "title": "Pending Deposits",
+      "desc": "Review and approve new deposit requests.",
+      "total": "{count} pending",
+      "empty": "No pending deposits"
+    },
+    "pendingWithdraws": {
+      "title": "Pending Withdrawals",
+      "desc": "Follow up on withdrawal requests awaiting action.",
+      "total": "{count} pending",
+      "empty": "No pending withdrawals"
+    }
   },
   "Operations": {
     "title": "Operations",
     "subtitle": "Select an operation from the sidebar."
+  },
+  "DepositPage": {
+    "eyebrow": "Balance Operations",
+    "title": "Deposit Requests",
+    "description": "Review uploaded receipts, approve deposits, and push tickets back to MT5.",
+    "requestsLabel": "{count} requests",
+    "pageInfo": "Page {current} of {total}",
+    "filters": {
+      "status": "Status",
+      "from": "From date",
+      "to": "To date",
+      "apply": "Apply",
+      "clear": "Clear",
+      "statusOptions": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      }
+    }
+  },
+  "DepositTable": {
+    "emptyTitle": "No deposit requests yet",
+    "emptySubtitle": "New uploads will appear here instantly.",
+    "columns": {
+      "request": "Request",
+      "account": "Account",
+      "payment": "Payment",
+      "receipt": "Receipt",
+      "status": "Status",
+      "action": "Action"
+    },
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
+    "view": "View",
+    "noUpload": "No upload",
+    "noComment": "No comment yet",
+    "commentPlaceholder": "Comment",
+    "processing": "Processing...",
+    "approved": "Approved",
+    "approve": "Approve",
+    "reject": "Reject",
+    "rejected": "Request rejected",
+    "ticket": "Ticket #{id}",
+    "ticketSaved": "Ticket #{id} saved",
+    "updated": "Updated {date}",
+    "close": "Close receipt",
+    "unknown": "-",
+    "errors": {
+      "approval": "Approval failed",
+      "rejection": "Rejection failed",
+      "unexpectedApproval": "Approval failed unexpectedly",
+      "unexpectedRejection": "Rejection failed unexpectedly"
+    }
+  },
+  "WithdrawPage": {
+    "eyebrow": "Balance Operations",
+    "title": "Withdraw Requests",
+    "description": "Review withdrawal submissions, approve transfers, or refund rejected ones.",
+    "requestsLabel": "{count} requests",
+    "pageInfo": "Page {current} of {total}",
+    "filters": {
+      "status": "Status",
+      "from": "From date",
+      "to": "To date",
+      "apply": "Apply",
+      "clear": "Clear",
+      "statusOptions": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      }
+    }
+  },
+  "WithdrawTable": {
+    "emptyTitle": "No withdrawal requests yet",
+    "emptySubtitle": "New submissions will appear here.",
+    "columns": {
+      "request": "Request",
+      "account": "Account",
+      "balances": "Balances",
+      "payment": "Payment",
+      "status": "Status",
+      "action": "Action"
+    },
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "approve": "Approve",
+    "approved": "Approved",
+    "reject": "Reject",
+    "rejected": "Request rejected",
+    "processing": "Processing...",
+    "commentPlaceholder": "Comment",
+    "noComment": "No comment yet",
+    "client": "Client",
+    "deal": "Deal #{id}",
+    "refund": "Refund #{id}",
+    "updated": "Updated {date}",
+    "balanceLine": "Bal {bal}  |  Eq {eq}",
+    "marginLine": "Mar {margin}  |  Free {free}",
+    "levelLine": "Lv {level}%  |  Cr {credit}",
+    "unknown": "-",
+    "errors": {
+      "approval": "Approval failed",
+      "rejection": "Rejection failed",
+      "unexpectedApproval": "Approval failed unexpectedly",
+      "unexpectedRejection": "Rejection failed unexpectedly"
+    }
   }
 }

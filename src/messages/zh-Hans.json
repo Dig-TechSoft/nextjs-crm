@@ -26,10 +26,139 @@
     "systemStatus": "系统状态",
     "statusValue": "全部系统运行正常",
     "totalUsers": "用户总数",
-    "activeReal": "真实账户"
+    "activeReal": "真实账户",
+    "pendingDeposits": {
+      "title": "待处理入金",
+      "desc": "查看并处理新的入金申请。",
+      "total": "{count} 条待处理",
+      "empty": "暂无待处理入金"
+    },
+    "pendingWithdraws": {
+      "title": "待处理出金",
+      "desc": "跟进等待审核的出金申请。",
+      "total": "{count} 条待处理",
+      "empty": "暂无待处理出金"
+    }
   },
   "Operations": {
     "title": "运营",
     "subtitle": "从侧边栏选择一个操作。"
+  },
+  "DepositPage": {
+    "eyebrow": "资金操作",
+    "title": "入金申请",
+    "description": "查看上传的回执，审核通过入金，并推送票据回 MT5。",
+    "requestsLabel": "{count} 条申请",
+    "pageInfo": "第 {current} / {total} 页",
+    "filters": {
+      "status": "状态",
+      "from": "开始日期",
+      "to": "结束日期",
+      "apply": "筛选",
+      "clear": "清空",
+      "statusOptions": {
+        "all": "全部",
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已拒绝"
+      }
+    }
+  },
+  "DepositTable": {
+    "emptyTitle": "暂无入金申请",
+    "emptySubtitle": "新的上传会立即显示在这里。",
+    "columns": {
+      "request": "申请",
+      "account": "账号",
+      "payment": "支付方式",
+      "receipt": "回执",
+      "status": "状态",
+      "action": "操作"
+    },
+    "status": {
+      "approved": "已通过",
+      "pending": "待审核",
+      "rejected": "已拒绝"
+    },
+    "view": "查看",
+    "noUpload": "无上传",
+    "noComment": "暂无备注",
+    "commentPlaceholder": "备注",
+    "processing": "处理中...",
+    "approved": "已通过",
+    "approve": "通过",
+    "reject": "拒绝",
+    "rejected": "申请已拒绝",
+    "ticket": "票据 #{id}",
+    "ticketSaved": "票据 #{id} 已保存",
+    "updated": "更新于 {date}",
+    "close": "关闭回执",
+    "unknown": "-",
+    "errors": {
+      "approval": "通过失败",
+      "rejection": "拒绝失败",
+      "unexpectedApproval": "通过时出现异常",
+      "unexpectedRejection": "拒绝时出现异常"
+    }
+  },
+  "WithdrawPage": {
+    "eyebrow": "资金操作",
+    "title": "出金申请",
+    "description": "查看出金提交，审批转账或退回拒绝的申请。",
+    "requestsLabel": "{count} 条申请",
+    "pageInfo": "第 {current} / {total} 页",
+    "filters": {
+      "status": "状态",
+      "from": "开始日期",
+      "to": "结束日期",
+      "apply": "筛选",
+      "clear": "清空",
+      "statusOptions": {
+        "all": "全部",
+        "pending": "待审核",
+        "approved": "已通过",
+        "rejected": "已拒绝",
+        "cancelled": "已取消"
+      }
+    }
+  },
+  "WithdrawTable": {
+    "emptyTitle": "暂无出金申请",
+    "emptySubtitle": "新的提交会立即显示在这里。",
+    "columns": {
+      "request": "申请",
+      "account": "账号",
+      "balances": "资金",
+      "payment": "支付方式",
+      "status": "状态",
+      "action": "操作"
+    },
+    "status": {
+      "approved": "已通过",
+      "pending": "待审核",
+      "rejected": "已拒绝",
+      "cancelled": "已取消"
+    },
+    "approve": "通过",
+    "approved": "已通过",
+    "reject": "拒绝",
+    "rejected": "申请已拒绝",
+    "processing": "处理中...",
+    "commentPlaceholder": "备注",
+    "noComment": "暂无备注",
+    "client": "客户",
+    "deal": "成交单 #{id}",
+    "refund": "退款单 #{id}",
+    "updated": "更新于 {date}",
+    "balanceLine": "余额 {bal} | 净值 {eq}",
+    "marginLine": "保证金 {margin} | 可用 {free}",
+    "levelLine": "比例 {level}% | 信用 {credit}",
+    "unknown": "-",
+    "errors": {
+      "approval": "通过失败",
+      "rejection": "拒绝失败",
+      "unexpectedApproval": "通过时出现异常",
+      "unexpectedRejection": "拒绝时出现异常"
+    }
   }
 }

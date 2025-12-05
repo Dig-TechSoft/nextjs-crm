@@ -2,6 +2,7 @@
 
 import React, { useState, useTransition } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import {
   approveDepositAction,
   rejectDepositAction,
@@ -19,7 +20,7 @@ interface DepositRequestsTableProps {
 }
 
 function formatAmount(value: number | null) {
-  if (value === null || Number.isNaN(value)) return "—";
+  if (value === null || Number.isNaN(value)) return "--";
   return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -27,9 +28,9 @@ function formatAmount(value: number | null) {
 }
 
 function formatDate(value: Date | string | null) {
-  if (!value) return "—";
+  if (!value) return "--";
   const date = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "--";
   return date.toLocaleString();
 }
 
@@ -41,16 +42,17 @@ function getReceiptUrl(uploadCode: string | null) {
   return `/deposit_receipt/${encodeURIComponent(filename)}`;
 }
 
-const statusTone: Record<string, { label: string; tone: string }> = {
-  approved: { label: "Approved", tone: "success" },
-  pending: { label: "Pending", tone: "warning" },
-  rejected: { label: "Rejected", tone: "danger" },
-};
+const statusTone = (t: (key: string, vars?: Record<string, any>) => string) => ({
+  approved: { label: t("status.approved"), tone: "success" },
+  pending: { label: t("status.pending"), tone: "warning" },
+  rejected: { label: t("status.rejected"), tone: "danger" },
+});
 
 export default function DepositRequestsTable({
   requests,
 }: DepositRequestsTableProps) {
   const router = useRouter();
+  const t = useTranslations("DepositTable");
   const [pendingId, setPendingId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<Record<number, Feedback>>({});
   const [preview, setPreview] = useState<{
@@ -77,7 +79,7 @@ export default function DepositRequestsTable({
         [id]: {
           type: "error",
           message:
-            error instanceof Error ? error.message : "Approval failed unexpectedly",
+            error instanceof Error ? error.message : t("errors.unexpectedApproval"),
         },
       }));
       setPendingId(null);
@@ -89,7 +91,7 @@ export default function DepositRequestsTable({
         ...prev,
         [id]: {
           type: "success",
-          message: `Ticket #${result.ticket} saved`,
+          message: t("ticketSaved", { id: result.ticket ?? "" }),
         },
       }));
       startTransition(() => router.refresh());
@@ -98,7 +100,7 @@ export default function DepositRequestsTable({
         ...prev,
         [id]: {
           type: "error",
-          message: result?.error || "Approval failed",
+          message: result?.error || t("errors.approval"),
         },
       }));
     }
@@ -124,7 +126,7 @@ export default function DepositRequestsTable({
         [id]: {
           type: "error",
           message:
-            error instanceof Error ? error.message : "Rejection failed unexpectedly",
+            error instanceof Error ? error.message : t("errors.unexpectedRejection"),
         },
       }));
       setPendingId(null);
@@ -136,7 +138,7 @@ export default function DepositRequestsTable({
         ...prev,
         [id]: {
           type: "success",
-          message: "Request rejected",
+          message: t("rejected"),
         },
       }));
       startTransition(() => router.refresh());
@@ -145,7 +147,7 @@ export default function DepositRequestsTable({
         ...prev,
         [id]: {
           type: "error",
-          message: result?.error || "Rejection failed",
+          message: result?.error || t("errors.rejection"),
         },
       }));
     }
@@ -160,8 +162,8 @@ export default function DepositRequestsTable({
           <div className={styles.emptyState}>
             <i className="ri-inbox-line" aria-hidden />
             <div>
-              <strong>No deposit requests yet</strong>
-              <p>New uploads will appear here instantly.</p>
+              <strong>{t("emptyTitle")}</strong>
+              <p>{t("emptySubtitle")}</p>
             </div>
           </div>
         ) : (
@@ -169,12 +171,12 @@ export default function DepositRequestsTable({
             <table className={styles.requestsTable}>
               <thead>
                 <tr>
-                  <th className={styles.min}>Request</th>
-                  <th>Account</th>
-                  <th className={styles.tight}>Payment</th>
-                  <th className={styles.min}>Receipt</th>
-                  <th>Status</th>
-                  <th className={styles.min}>Action</th>
+                  <th className={styles.min}>{t("columns.request")}</th>
+                  <th>{t("columns.account")}</th>
+                  <th className={styles.tight}>{t("columns.payment")}</th>
+                  <th className={styles.min}>{t("columns.receipt")}</th>
+                  <th>{t("columns.status")}</th>
+                  <th className={styles.min}>{t("columns.action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,7 +188,10 @@ export default function DepositRequestsTable({
                   const isResolved = isApproved || isRejected;
                   const receiptUrl = getReceiptUrl(req.uploadCode);
                   const toneKey = (req.status || "").toLowerCase();
-                  const tone = statusTone[toneKey] || statusTone.pending;
+                  const toneMap = statusTone(t);
+                  const tone =
+                    toneMap[toneKey as keyof ReturnType<typeof statusTone>] ||
+                    toneMap.pending;
                   const feedbackMsg = feedback[req.id];
 
                   return (
@@ -197,7 +202,7 @@ export default function DepositRequestsTable({
                       <td>
                         <div className={styles.stack}>
                           <div className={styles.main}>
-                            {req.login || "—"}
+                            {req.login || t("unknown")}
                             {req.amount !== null && (
                               <span className={styles.amount}>
                                 {formatAmount(req.amount)} USD
@@ -209,7 +214,7 @@ export default function DepositRequestsTable({
                               <span title={req.comment}>{req.comment}</span>
                             ) : (
                               <span className={styles.muted}>
-                                No comment yet
+                                {t("noComment")}
                               </span>
                             )}
                           </div>
@@ -220,11 +225,11 @@ export default function DepositRequestsTable({
                           className={`${styles.stack} ${styles.paymentStack}`}
                         >
                           <div className={styles.main}>
-                            {req.paymentMethod || "—"}
+                            {req.paymentMethod || t("unknown")}
                           </div>
                           <div className={`${styles.sub} ${styles.truncate}`}>
-                            {req.usdtType ? `${req.usdtType} · ` : ""}
-                            {req.walletAddress || "—"}
+                            {req.usdtType ? `${req.usdtType} ` : ""}
+                            {req.walletAddress || t("unknown")}
                           </div>
                         </div>
                       </td>
@@ -236,15 +241,15 @@ export default function DepositRequestsTable({
                             onClick={() =>
                               setPreview({
                                 src: receiptUrl,
-                                title: req.uploadCode || "Receipt",
+                                title: req.uploadCode || t("columns.receipt"),
                               })
                             }
                           >
                             <i className="ri-image-2-line" aria-hidden />
-                            View
+                            {t("view")}
                           </button>
                         ) : (
-                          <span className={styles.muted}>No upload</span>
+                          <span className={styles.muted}>{t("noUpload")}</span>
                         )}
                       </td>
                       <td>
@@ -257,11 +262,11 @@ export default function DepositRequestsTable({
                         </div>
                         {req.deal && (
                           <div className={`${styles.sub} ${styles.muted}`}>
-                            Ticket #{req.deal}
+                            {t("ticket", { id: req.deal })}
                           </div>
                         )}
                         <div className={`${styles.sub} ${styles.muted}`}>
-                          Updated {formatDate(req.updateTime)}
+                          {t("updated", { date: formatDate(req.updateTime) })}
                         </div>
                       </td>
                       <td>
@@ -295,8 +300,8 @@ export default function DepositRequestsTable({
                                 ? req.comment || "Rejected"
                                 : req.comment || "Deposit_BO"
                             }
-                            placeholder="Comment"
-                            aria-label="Comment"
+                            placeholder={t("commentPlaceholder")}
+                            aria-label={t("commentPlaceholder")}
                             readOnly={isResolved}
                             disabled={isResolved}
                           />
@@ -308,10 +313,10 @@ export default function DepositRequestsTable({
                               disabled={pendingId === req.id || isResolved}
                             >
                               {pendingId === req.id
-                                ? "Processing..."
+                                ? t("processing")
                                 : isApproved
-                                ? "Approved"
-                                : "Approve"}
+                                ? t("approved")
+                                : t("approve")}
                             </button>
                             <button
                               type="submit"
@@ -320,8 +325,8 @@ export default function DepositRequestsTable({
                               disabled={pendingId === req.id || isResolved}
                             >
                               {pendingId === req.id
-                                ? "Processing..."
-                                : "Reject"}
+                                ? t("processing")
+                                : t("reject")}
                             </button>
                           </div>
                         </form>
@@ -349,13 +354,13 @@ export default function DepositRequestsTable({
           <div className={styles.receiptCard}>
             <div className={styles.receiptHeader}>
               <div>
-                <div className={styles.eyebrow}>Receipt</div>
+                <div className={styles.eyebrow}>{t("columns.receipt")}</div>
                 <div className={styles.main}>{preview.title}</div>
               </div>
               <button
                 className="btn btn-xs btn-transparent"
                 onClick={() => setPreview(null)}
-                aria-label="Close receipt"
+                aria-label={t("close")}
               >
                 <i className="ri-close-line" aria-hidden />
               </button>

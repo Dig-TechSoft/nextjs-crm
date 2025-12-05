@@ -1,0 +1,30 @@
+"use client";
+
+import React, { useState, useTransition } from "react";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import {
+  approveDepositAction,
+  rejectDepositAction,
+  type DepositRequest,
+} from "./actions";
+import styles from "./deposit.module.scss";
+
+type Feedback = {
+  type: "success" | "error";
+  message: string;
+};
+
+interface DepositRequestsTableProps {
+  requests: DepositRequest[];
+}
+
+function formatAmount(value: number | null) {
+  if (value === null || Number.isNaN(value)) return "—";
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatDate(value: Date | string | null) {

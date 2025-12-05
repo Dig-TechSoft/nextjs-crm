@@ -94,15 +94,46 @@ export async function fetchDepositRequests(): Promise<DepositRequest[]> {
 
 export async function fetchDepositRequestsPaginated(
   page: number,
-  pageSize: number
+  pageSize: number,
+  filters?: { status?: string; from?: string; to?: string }
 ): Promise<{ requests: DepositRequest[]; total: number }> {
   const currentPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const limit = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 10;
   const offset = (currentPage - 1) * limit;
 
+  const whereParts: string[] = [];
+  const params: Array<string | number | Date> = [];
+
+  const status = filters?.status?.toLowerCase();
+  const hasDates = Boolean(filters?.from) || Boolean(filters?.to);
+  if (status && status !== 'all') {
+    if (status === 'pending' && !hasDates) {
+      whereParts.push(`(LOWER(Status) = ? OR DATE(Time) = CURDATE())`);
+      params.push(status);
+    } else {
+      whereParts.push(`LOWER(Status) = ?`);
+      params.push(status);
+    }
+  }
+
+  const from = filters?.from ? new Date(filters.from) : null;
+  if (from && !Number.isNaN(from.getTime())) {
+    whereParts.push(`Time >= ?`);
+    params.push(from);
+  }
+
+  const to = filters?.to ? new Date(filters.to) : null;
+  if (to && !Number.isNaN(to.getTime())) {
+    whereParts.push(`Time <= ?`);
+    params.push(to);
+  }
+
+  const whereClause = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
   try {
     const [[countRow]] = await pool.query<RowDataPacket[]>(
-      `SELECT COUNT(*) as total FROM deposit_receipt_upload`
+      `SELECT COUNT(*) as total FROM deposit_receipt_upload ${whereClause}`,
+      params
     );
     const total = Number(countRow?.total ?? 0);
 
@@ -118,14 +149,15 @@ export async function fetchDepositRequestsPaginated(
           Status,
           Amount,
           Comment,
-          PaymentMethod,
-          USDTType,
-          WalletAddress
-        FROM deposit_receipt_upload
+        PaymentMethod,
+        USDTType,
+        WalletAddress
+      FROM deposit_receipt_upload
+        ${whereClause}
         ORDER BY Time DESC
         LIMIT ? OFFSET ?
       `,
-      [limit, offset]
+      [...params, limit, offset]
     );
 
     const requests = rows.map((row) => ({

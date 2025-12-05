@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { routing } from "@/i18n/routing";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -12,24 +13,36 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = false, onNavigate }: SidebarProps) {
   const pathname = usePathname();
-  const [open, setOpen] = useState<string | null>("Operation");
+  const t = useTranslations("Sidebar");
+  const operationLabel = t("operation");
+  const [open, setOpen] = useState<string | null>(operationLabel);
+
+  const stripLocale = (path: string) => {
+    const segments = path.split("/");
+    const maybeLocale = segments[1];
+    if ((routing.locales as readonly string[]).includes(maybeLocale)) {
+      return "/" + segments.slice(2).join("/");
+    }
+    return path;
+  };
 
   const menus = [
-    { name: "Dashboard", href: "/", icon: "ri-dashboard-line" },
+    { name: t("dashboard"), href: "/", icon: "ri-dashboard-line" },
     {
-      name: "Operation",
+      name: t("operation"),
       icon: "ri-folder-open-line",
       items: [
-        { name: "Applications", href: "/operations/application" },
-        { name: "Deposit Requests", href: "/operations/deposit" },
-        { name: "Withdraw Requests", href: "/operations/withdraw" },
-        { name: "Client List", href: "/operations/clients" },
+        { name: t("applications"), href: "/operations/application" },
+        { name: t("depositRequests"), href: "/operations/deposit" },
+        { name: t("withdrawRequests"), href: "/operations/withdraw" },
+        { name: t("clientList"), href: "/operations/clients" },
       ],
     },
   ];
 
-  const isActive = (href: string) => pathname === href;
-  const isParentActive = () => pathname.startsWith("/operations");
+  const cleanPath = stripLocale(pathname);
+  const isActive = (href: string) => cleanPath === href;
+  const isParentActive = () => cleanPath.startsWith("/operations");
 
   return (
     <aside className={`sidebar ${isOpen ? "open" : ""}`}>

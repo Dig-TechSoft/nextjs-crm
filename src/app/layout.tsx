@@ -1,7 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import "../styles/main.scss";
-import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
   title: "MT5 CRM",
@@ -14,10 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="app-root">
-        <AppShell>{children}</AppShell>
-      </body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="app-root">{children}</body>
     </html>
   );
 }

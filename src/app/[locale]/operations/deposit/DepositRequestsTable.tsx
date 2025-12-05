@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import {
   approveDepositAction,
   rejectDepositAction,
@@ -68,7 +68,21 @@ export default function DepositRequestsTable({
       return next;
     });
 
-    const result = await approveDepositAction(formData);
+    let result;
+    try {
+      result = await approveDepositAction(formData);
+    } catch (error) {
+      setFeedback((prev) => ({
+        ...prev,
+        [id]: {
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Approval failed unexpectedly",
+        },
+      }));
+      setPendingId(null);
+      return;
+    }
 
     if (result?.success) {
       setFeedback((prev) => ({
@@ -101,7 +115,21 @@ export default function DepositRequestsTable({
       return next;
     });
 
-    const result = await rejectDepositAction(formData);
+    let result;
+    try {
+      result = await rejectDepositAction(formData);
+    } catch (error) {
+      setFeedback((prev) => ({
+        ...prev,
+        [id]: {
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Rejection failed unexpectedly",
+        },
+      }));
+      setPendingId(null);
+      return;
+    }
 
     if (result?.success) {
       setFeedback((prev) => ({

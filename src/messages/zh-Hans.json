@@ -1,0 +1,35 @@
+{
+  "Common": {
+    "language": "语言"
+  },
+  "Sidebar": {
+    "dashboard": "仪表盘",
+    "operation": "运营",
+    "applications": "开户申请",
+    "depositRequests": "入金申请",
+    "withdrawRequests": "出金申请",
+    "clientList": "客户列表"
+  },
+  "Header": {
+    "logout": "退出登录"
+  },
+  "Login": {
+    "title": "登录 Flamycom CRM",
+    "emailLabel": "邮箱或用户名",
+    "passwordLabel": "密码",
+    "submit": "登录",
+    "error": "请输入账号和密码。"
+  },
+  "Dashboard": {
+    "title": "仪表盘",
+    "welcome": "欢迎使用 MT5 CRM 后台。",
+    "systemStatus": "系统状态",
+    "statusValue": "全部系统运行正常",
+    "totalUsers": "用户总数",
+    "activeReal": "真实账户"
+  },
+  "Operations": {
+    "title": "运营",
+    "subtitle": "从侧边栏选择一个操作。"
+  }
+}

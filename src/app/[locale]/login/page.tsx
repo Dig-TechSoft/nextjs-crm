@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import React, { useState } from "react";
+import { useRouter } from "@/i18n/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import FullPage from "@/components/base/FullPage";
 import Field from "@/components/base/Field";
 
 export default function Login() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("Login");
   const [isLoading, setIsLoading] = useState(false);
   const [identity, setIdentity] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +28,7 @@ export default function Login() {
       localStorage.setItem("crm_user_name", identity);
       router.push("/");
     } else {
-      setError("Please provide credentials.");
+      setError(t("error"));
     }
 
     setIsLoading(false);
@@ -36,12 +38,12 @@ export default function Login() {
   return (
     <FullPage>
       <div className="content txt-center m-b-base">
-        <h4>Login to Flamycom CRM</h4>
+        <h4>{t("title")}</h4>
       </div>
 
       <form className="block" onSubmit={authWithPassword}>
         <Field className="form-field required" name="identity" error={error}>
-          <label htmlFor="identity">Email or Username</label>
+          <label htmlFor="identity">{t("emailLabel")}</label>
           <input
             id="identity"
             type="text"
@@ -53,7 +55,7 @@ export default function Login() {
         </Field>
 
         <Field className="form-field required" name="password">
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password">{t("passwordLabel")}</label>
           <input
             type="password"
             id="password"
@@ -68,7 +70,7 @@ export default function Login() {
           className={`btn btn-lg btn-block btn-next ${isLoading ? "btn-loading" : ""}`}
           disabled={isLoading}
         >
-          <span className="txt">Login</span>
+          <span className="txt">{t("submit")}</span>
           <i className="ri-arrow-right-line" />
         </button>
       </form>

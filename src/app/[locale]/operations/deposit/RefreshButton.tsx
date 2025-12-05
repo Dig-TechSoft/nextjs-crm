@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import styles from './deposit.module.scss';
+import React from "react";
+import { useRouter } from "@/i18n/navigation";
+import styles from "./deposit.module.scss";
 
 export default function RefreshButton() {
   const router = useRouter();

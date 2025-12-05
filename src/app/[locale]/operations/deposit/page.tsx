@@ -1,5 +1,5 @@
 import React from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import DepositRequestsTable from "./DepositRequestsTable";
 import { fetchDepositRequestsPaginated } from "./actions";
 import RefreshButton from "./RefreshButton";

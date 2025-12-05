@@ -1,0 +1,35 @@
+{
+  "Common": {
+    "language": "Language"
+  },
+  "Sidebar": {
+    "dashboard": "Dashboard",
+    "operation": "Operation",
+    "applications": "Applications",
+    "depositRequests": "Deposit Requests",
+    "withdrawRequests": "Withdraw Requests",
+    "clientList": "Client List"
+  },
+  "Header": {
+    "logout": "Logout"
+  },
+  "Login": {
+    "title": "Login to Flamycom CRM",
+    "emailLabel": "Email or Username",
+    "passwordLabel": "Password",
+    "submit": "Login",
+    "error": "Please provide credentials."
+  },
+  "Dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to the MT5 CRM Dashboard.",
+    "systemStatus": "System Status",
+    "statusValue": "All systems operational",
+    "totalUsers": "Total Users",
+    "activeReal": "Active real accounts"
+  },
+  "Operations": {
+    "title": "Operations",
+    "subtitle": "Select an operation from the sidebar."
+  }
+}

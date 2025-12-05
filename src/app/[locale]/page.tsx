@@ -2,11 +2,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { getTotalUsers } from "./actions";
+import { useRouter } from "@/i18n/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { getTotalUsers } from "../actions";
 
 export default function Dashboard() {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("Dashboard");
   const [totalUsers, setTotalUsers] = useState<number | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -23,7 +26,7 @@ export default function Dashboard() {
     }
 
     setReady(true);
-  }, [router]);
+  }, [locale, router]);
 
   // Optional: show loading state
   if (!ready) {
@@ -33,13 +36,13 @@ export default function Dashboard() {
   return (
     <div className="grid grid-sm">
       <div className="col-lg-12">
-        <h3>Dashboard</h3>
+        <h3>{t("title")}</h3>
       </div>
 
       <div className="col-lg-12">
         <div className="panel">
           <div className="panel-body">
-            <p>Welcome to the MT5 CRM Dashboard.</p>
+            <p>{t("welcome")}</p>
           </div>
         </div>
       </div>
@@ -47,13 +50,13 @@ export default function Dashboard() {
       <div className="col-lg-4 col-sm-6">
         <div className="panel">
           <div className="panel-header">
-            <strong>Total Users</strong>
+            <strong>{t("totalUsers")}</strong>
           </div>
           <div className="panel-body">
             <div className="txt-xl txt-bold">
               {totalUsers !== null ? totalUsers.toLocaleString() : "Loading..."}
             </div>
-            <div className="txt-hint">Active real accounts</div>
+            <div className="txt-hint">{t("activeReal")}</div>
           </div>
         </div>
       </div>
@@ -61,12 +64,12 @@ export default function Dashboard() {
       <div className="col-lg-4">
         <div className="panel">
           <div className="panel-header">
-            <strong>System Status</strong>
+            <strong>{t("systemStatus")}</strong>
           </div>
           <div className="panel-body">
             <div className="flex align-center gap-10">
               <i className="ri-checkbox-circle-fill txt-success"></i>
-              <span>All systems operational</span>
+              <span>{t("statusValue")}</span>
             </div>
           </div>
         </div>

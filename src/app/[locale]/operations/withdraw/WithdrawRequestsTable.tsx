@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import {
   approveWithdrawalAction,
   rejectWithdrawalAction,
@@ -65,7 +65,21 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
       return next;
     });
 
-    const result = await approveWithdrawalAction(formData);
+    let result;
+    try {
+      result = await approveWithdrawalAction(formData);
+    } catch (error) {
+      setFeedback((prev) => ({
+        ...prev,
+        [id]: {
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Approval failed unexpectedly",
+        },
+      }));
+      setPendingId(null);
+      return;
+    }
 
     if (result?.success) {
       setFeedback((prev) => ({
@@ -95,7 +109,21 @@ export default function WithdrawRequestsTable({ requests }: WithdrawalTableProps
       return next;
     });
 
-    const result = await rejectWithdrawalAction(formData);
+    let result;
+    try {
+      result = await rejectWithdrawalAction(formData);
+    } catch (error) {
+      setFeedback((prev) => ({
+        ...prev,
+        [id]: {
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Rejection failed unexpectedly",
+        },
+      }));
+      setPendingId(null);
+      return;
+    }
 
     if (result?.success) {
       setFeedback((prev) => ({

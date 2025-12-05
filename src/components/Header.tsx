@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { routing } from "@/i18n/routing";
 
 interface HeaderProps {
   breadcrumb?: React.ReactNode;
@@ -13,10 +14,23 @@ interface HeaderProps {
 export default function Header({ breadcrumb, onToggleSidebar }: HeaderProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("Header");
   const [userName, setUserName] = React.useState<string>("Admin");
 
+  const stripLocale = (path: string) => {
+    const segments = path.split("/");
+    const maybeLocale = segments[1];
+    if ((routing.locales as readonly string[]).includes(maybeLocale)) {
+      return "/" + segments.slice(2).join("/");
+    }
+    return path;
+  };
+
   // Auto generate clean breadcrumbs
-  const segments = pathname.split("/").filter(Boolean);
+  const segments = stripLocale(pathname)
+    .split("/")
+    .filter(Boolean);
   const crumbs = segments.map((seg, i) => {
     const path = "/" + segments.slice(0, i + 1).join("/");
     const label = seg
@@ -74,9 +88,11 @@ export default function Header({ breadcrumb, onToggleSidebar }: HeaderProps = {}
         </nav>
 
         <div className="user-actions">
+          <LanguageSwitcher />
           <span className="user-name">{userName}</span>
           <button onClick={handleLogout} className="logout-btn">
-            <i className="ri-logout-box-r-line"></i>
+            <i className="ri-logout-box-r-line" aria-hidden></i>
+            <span className="sr-only">{t("logout")}</span>
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import pool from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { RowDataPacket } from 'mysql2';
+import { routing } from '@/i18n/routing';
 
 export interface WithdrawalRequest {
   id: number;
@@ -58,6 +59,15 @@ interface WithdrawalRow extends RowDataPacket {
 
 const BALANCE_API_URL =
   process.env.BALANCE_API_URL || 'http://127.0.0.1:3000/api/trade/balance';
+
+const API_TIMEOUT_MS = Number(process.env.API_TIMEOUT_MS || 10000);
+
+function revalidateWithdrawPages() {
+  revalidatePath('/operations/withdraw');
+  routing.locales.forEach((locale) =>
+    revalidatePath(`/${locale}/operations/withdraw`)
+  );
+}
 
 function toNumber(value: number | string | null): number | null {
   if (value === null) return null;
@@ -185,7 +195,7 @@ export async function approveWithdrawalAction(formData: FormData) {
     [customComment, operator, withdrawId]
   );
 
-  revalidatePath('/operations/withdraw');
+  revalidateWithdrawPages();
 
   return { success: true };
 }
@@ -240,7 +250,13 @@ export async function rejectWithdrawalAction(formData: FormData) {
   let ticket = '';
 
   try {
-    const apiResponse = await fetch(apiUrl.toString(), { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+    const apiResponse = await fetch(apiUrl.toString(), {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
 
     if (!apiResponse.ok) {
       return { success: false, error: 'Refund API call failed.' };
@@ -257,7 +273,11 @@ export async function rejectWithdrawalAction(formData: FormData) {
     ticket = payload.data.ticket;
   } catch (error) {
     console.error('Refund API error:', error);
-    return { success: false, error: 'Unable to reach refund API.' };
+    const message =
+      error instanceof Error && error.name === 'AbortError'
+        ? 'Refund API timed out.'
+        : 'Unable to reach refund API.';
+    return { success: false, error: message };
   }
 
   await pool.query(
@@ -274,7 +294,7 @@ export async function rejectWithdrawalAction(formData: FormData) {
     [customComment, ticket, operator, withdrawId]
   );
 
-  revalidatePath('/operations/withdraw');
+  revalidateWithdrawPages();
 
   return { success: true, ticket };
 }

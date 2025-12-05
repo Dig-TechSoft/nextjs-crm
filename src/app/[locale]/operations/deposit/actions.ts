@@ -3,6 +3,7 @@
 import pool from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { RowDataPacket } from 'mysql2';
+import { routing } from '@/i18n/routing';
 
 export interface DepositRequest {
   id: number;
@@ -36,6 +37,15 @@ interface DepositRequestRow extends RowDataPacket {
 
 const DEPOSIT_API_URL =
   process.env.DEPOSIT_API_URL || 'http://127.0.0.1:3000/api/trade/balance';
+
+const API_TIMEOUT_MS = Number(process.env.API_TIMEOUT_MS || 10000);
+
+function revalidateDepositPages() {
+  revalidateDepositPages();
+  routing.locales.forEach((locale) =>
+    revalidatePath(`/${locale}/operations/deposit`)
+  );
+}
 
 export async function fetchDepositRequests(): Promise<DepositRequest[]> {
   const [rows] = await pool.query<DepositRequestRow[]>(`
@@ -186,7 +196,13 @@ export async function approveDepositAction(formData: FormData) {
   let ticket = '';
 
   try {
-    const apiResponse = await fetch(apiUrl.toString(), { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+    const apiResponse = await fetch(apiUrl.toString(), {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
 
     if (!apiResponse.ok) {
       return { success: false, error: 'Deposit API call failed.' };
@@ -203,7 +219,11 @@ export async function approveDepositAction(formData: FormData) {
     ticket = payload.data.ticket;
   } catch (error) {
     console.error('Deposit API error:', error);
-    return { success: false, error: 'Unable to reach deposit API.' };
+    const message =
+      error instanceof Error && error.name === 'AbortError'
+        ? 'Deposit API timed out.'
+        : 'Unable to reach deposit API.';
+    return { success: false, error: message };
   }
 
   await pool.query(
@@ -215,7 +235,7 @@ export async function approveDepositAction(formData: FormData) {
     [ticket, customComment, receiptId]
   );
 
-  revalidatePath('/operations/deposit');
+  revalidateDepositPages();
 
   return { success: true, ticket, comment: customComment };
 }
